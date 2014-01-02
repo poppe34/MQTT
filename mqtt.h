@@ -78,6 +78,9 @@ enum sendStatus{
 	MSG_SENT,
 	MSG_WAITING_FOR_ACK,
 	MSG_WAITING_FOR_COMP,
+	MSG_WAITING_FOR_PUBREL,
+	MSG_WAITING_FOR_PUBACK,
+	MSG_HOLD_IN_MEMORY,
 	MSG_SEND_ERROR,
 	MSG_COMPLETE,
 };
@@ -136,6 +139,7 @@ typedef struct mqtt_msg {
 	uint32_t		timesent;
 	uint16_t 		msgID;
 	enum sendStatus	status;
+	uint8_t			retries;
 	uint8_t 		pkt[];
 
 }mqtt_msg_t;
@@ -150,7 +154,7 @@ typedef struct mqtt_pubSubMsg {
 	uint8_t *topic;
 	uint8_t *payload;
 	uint32_t payLen;
-	uint32_t msgID;//I don't know if I want this value here
+	uint16_t msgID;//I don't know if I want this value here
 	uint8_t  qos;
 }mqtt_pubSubMsg_t;
 
@@ -202,5 +206,6 @@ void mqtt_dnsCallback(const char *name, ip_addr_t *ipaddr, void *callback_arg);
 size_t mqtt_lenEncode(uint8_t *buf, uint32_t pktLen);
 mqtt_err_t mqtt_waitForConnAck(mqtt_client_t *client, uint32_t timeout);
 
-
+/* mqtt_send.c */
+mqtt_msg_t *mqtt_findPubWithID(mqtt_client_t *client, uint16_t msgID);
 #endif /* MQTT_H_ */

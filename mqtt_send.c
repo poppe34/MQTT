@@ -22,7 +22,7 @@
 
 
 
-mqtt_msg_t *mqtt_findPubWithID(mqtt_client_t *client, uint16_t msgID);
+
 
 uint16_t mqtt_makeMsgID(void);
 void mqtt_sendPing(mqtt_client_t *client);
@@ -82,8 +82,10 @@ void mqtt_writeData(Node_t *node, mqtt_client_t *client)
 				msg->status = MSG_COMPLETE;
 				break;
 			case 1:
+				msg->status = MSG_WAITING_FOR_PUBACK;
+				break;
 			case 2:
-				msg->status = MSG_WAITING_FOR_ACK;
+				msg->status = MSG_WAITING_FOR_PUBREL;
 				break;
 			}
 			break;
@@ -121,6 +123,18 @@ void mqtt_writeData(Node_t *node, mqtt_client_t *client)
 			client->connected = 0;
 			//msg->status = MSG_COMPLETE;
 		}
+	break;
+
+	case MSG_WAITING_FOR_PUBACK:
+
+		if((sys_now() - msg->timesent) > client->timeout)
+		{
+			msg->retries++;
+
+			if(msg->retries > MQTT_RETRIES)
+				msg->status = MSG_SEND_ERROR;
+		}
+
 	break;
 
 	case MSG_COMPLETE:
@@ -180,6 +194,49 @@ void mqtt_sendPing(mqtt_client_t *client)
 #endif
 }
 
+mqtt_err_t mqtt_pubAck(mqtt_client_t *client, uint16_t id)
+{
+	mqtt_msg_t *msg = mqtt_createMsg(4);
+	uint8_t *buf = msg->pkt;
+
+	msg->fHdr.pkt_len = 2;
+	msg->fHdr.bits.retain = 0;
+	msg->fHdr.bits.msg_type = PUBACK;
+	msg->fHdr.bits.qos = 0;
+	msg->fHdr.bits.dup_flag = 0;
+
+	*buf++ = msg->fHdr.firstByte;
+	*buf++ = 2;
+	*buf++ = (0xff & (id >> 8));
+	*buf++ = 0xff & id;
+
+	msg->len = 4;
+	mqtt_send(client, msg);
+	return 0;
+
+}
+
+mqtt_err_t mqtt_pubRec(mqtt_client_t *client, uint16_t id)
+{
+	mqtt_msg_t *msg = mqtt_createMsg(4);
+	uint8_t *buf = msg->pkt;
+
+	msg->fHdr.pkt_len = 2;
+	msg->fHdr.bits.retain = 0;
+	msg->fHdr.bits.msg_type = PUBREC;
+	msg->fHdr.bits.qos = 0;
+	msg->fHdr.bits.dup_flag = 0;
+
+	*buf++ = msg->fHdr.firstByte;
+	*buf++ = 2;
+	*buf++ = (0xff & (id >> 8));
+	*buf++ = 0xff & id;
+
+	msg->len = 4;
+	mqtt_send(client, msg);
+	return 0;
+
+}
 
 mqtt_err_t mqtt_pubrel(mqtt_client_t *client, uint8_t dup, uint16_t id)
 {

@@ -35,7 +35,8 @@ void mqtt_clientThread(void *arg)
 		bytesRead = recv(client->socket, receiveBuf, 256, 0);
 		if(bytesRead < 1500 && bytesRead != 0)
 		{
-			rt_kprintf("MQTT received 0x%x bytes of data\n", bytesRead);
+			LWIP_DEBUGF(MQTT_DEBUG, ("MQTT received 0x%x bytes of data\n", bytesRead));
+
 			mqtt_handler(client, receiveBuf, bytesRead);
 #if 0
 			int x = 0;

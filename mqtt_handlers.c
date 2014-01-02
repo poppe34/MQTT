@@ -153,8 +153,7 @@ mqtt_err_t mqtt_pubHandler(mqtt_client_t *client, mqtt_msg_t *msg, uint8_t *buf)
 	mqtt_pubSubMsg_t PSMsg;
 	uint32_t strLen;
 
-//	PSMsg.msgID = (uint32_t)((*buf++) << 8);
-//	PSMsg.msgID = (uint32_t)(*buf++);
+	PSMsg.qos = msg->fHdr.bits.qos;
 
 	strLen = (uint32_t)((*buf++) << 8);
 	strLen = (uint32_t)(*buf++);
@@ -162,25 +161,50 @@ mqtt_err_t mqtt_pubHandler(mqtt_client_t *client, mqtt_msg_t *msg, uint8_t *buf)
 	//Determine the length left for the payload 2 for the utf str len and also actual str len
 	bufferLeft -= 2;
 	bufferLeft -= strLen;
-	PSMsg.topic = (uint8_t *)(rt_malloc(strLen+1));
+	PSMsg.topic = (uint8_t *)MQTT_MALLOC(strLen+1);
 
 	memcpy(PSMsg.topic, buf, strLen);
 	PSMsg.topic[strLen] = '\0';
 	buf += strLen;
 
-	PSMsg.payload = (uint8_t *)(rt_malloc(bufferLeft+1));
+	/*
+	 * MSG ID
+	 * 	If there is a QOS greater than 0 we need the msg ID
+	 */
+	if(PSMsg.qos > 0)
+	{
+		PSMsg.msgID = (uint32_t)((*buf++) << 8);
+		PSMsg.msgID = (uint32_t)(*buf++);
+	}
+
+	//** PAYLOAD **//
+	PSMsg.payload = (uint8_t *)MQTT_MALLOC(bufferLeft+1);
+	PSMsg.payLen = bufferLeft;
 
 	memcpy(PSMsg.payload, buf, bufferLeft);
 	PSMsg.payload[bufferLeft] = '\0';
 	buf += strLen;
 
-	printf("Topic len:%i Payload len: %i\n", strLen, bufferLeft);
+	LWIP_DEBUGF(MQTT_DEBUG, ("Topic len:%i Payload len: %i\n", strLen, bufferLeft));
 
 
-	printf("------ Received Pub MSG: -------\n");
-	//printf("MSG ID")
-	printf(" Topic: %s\n", PSMsg.topic);
-	//printf(" Payload: %s\n", PSMsg.payload);
+	LWIP_DEBUGF(MQTT_DEBUG, ("------ Received Pub MSG: -------\n"));
+
+	if(PSMsg.qos > 0)
+		LWIP_DEBUGF(MQTT_DEBUG, ("MSG ID: %i", PSMsg.msgID));
+
+	LWIP_DEBUGF(MQTT_DEBUG, (" Topic: %s\n", PSMsg.topic));
+	/* FIXME This need to be changed in case the payload is not ascii */
+	LWIP_DEBUGF(MQTT_DEBUG, (" Payload: %s\n", PSMsg.payload));
+
+	if(PSMsg.qos == 1)
+	{
+		mqtt_pubAck(client, PSMsg.msgID);
+	} else if ( PSMsg.qos == 2)
+	{
+		mqtt_pubRec(client, PSMsg.msgID);
+	}
+
 
 	/**
 	 * I am going to add a hook here to bridge coap to mqtt
