@@ -242,8 +242,8 @@ mqtt_err_t mqtt_check_keepalive(mqtt_client_t *client)
 
 void mqtt_registerMsgCB(mqtt_client_t *client, pubMsgCallback cb)
 {
-	LWIP_PLATFORM_ASSERT(client);
-	LWIP_PLATFORM_ASSERT(cb);
+	RT_ASSERT(client);
+	RT_ASSERT(cb);
 
 	client->msgCB = cb;
 }
