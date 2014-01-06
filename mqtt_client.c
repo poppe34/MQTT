@@ -23,6 +23,7 @@
  */
 mqtt_err_t mqtt_createClient(mqtt_client_t *client, char *server, uint16_t port, uint32_t keepAlive, const char *name)
 {
+	RT_ASSERT(client);
 	struct sockaddr_in serverAddr;
 	struct in_addr addr;
 	uint32_t serveraddr;
@@ -71,7 +72,7 @@ mqtt_err_t mqtt_createClient(mqtt_client_t *client, char *server, uint16_t port,
 	LWIP_DEBUG(MQTT_DEBUG, ("client %s socket number: %i\n", client->name, client->socket));
 	if(client->socket < 0 || client->socket > 100)
 	{
-		rt_kprintf( "HTTP: SOCKET FAILED\n" );
+		rt_kprintf( "MQTT: SOCKET FAILED\n" );
 		return badSocket;
 	}
 	/* set socket option */

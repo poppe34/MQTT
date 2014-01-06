@@ -53,6 +53,9 @@
 
 #define MQTT_UPDATE_DELAY	500 //MS delay....
 
+#ifndef NULL
+#define NULL (void *)0
+#endif /* NULL */
 
 #define MQTT_MALLOC(size)	rt_malloc(size);
 #define MQTT_FREE(data)		rt_free(data);

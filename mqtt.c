@@ -237,6 +237,7 @@ mqtt_err_t mqtt_check_keepalive(mqtt_client_t *client)
 	{
 		mqtt_sendPing(client);
 	}
+	return mqtt_errSuccess;
 }
 
 void mqtt_registerMsgCB(mqtt_client_t *client, pubMsgCallback cb)
