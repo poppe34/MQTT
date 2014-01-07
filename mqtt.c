@@ -84,7 +84,6 @@ mqtt_err_t mqtt_sendConnect(mqtt_client_t *client)
 	msg->vHdr.bits.clean_session = 1;
 	*buf++ = msg->vHdr.firstbyte;
 
-	//printf("variable header first byte 0x%X for %s\n", msg->vHdr.firstbyte, client->name);
 	/* Keep Alive */
 	uint32_t toSec = client->keepalive / 1000;
 	*buf++ = (uint8_t)(0xff & (toSec >> 8));
@@ -98,13 +97,12 @@ mqtt_err_t mqtt_sendConnect(mqtt_client_t *client)
 	 * password */
 
 	//TODO Add user authentication
-	buf += mqtt_stringToUtf(client_id, buf);
+	buf += mqtt_stringToUtf(client_id, buf);//FIXME and variable client ID
 
 	if(client->will)
 	{
 		buf += mqtt_stringToUtf(client->will->topic, buf);
 		buf += mqtt_stringToUtf(client->will->message, buf);
-		printf("here\n");
 	}
 	msg->len = buf - msg->pkt;
 

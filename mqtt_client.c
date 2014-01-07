@@ -43,7 +43,7 @@ mqtt_err_t mqtt_createClient(mqtt_client_t *client, char *server, uint16_t port,
 	}
 	else
 	{
-		LWIP_DEBUG(MQTT_DEBUG, ("Waiting to find IP\n"));
+		LWIP_DEBUGF(MQTT_DEBUG, ("Waiting to find IP\n"));
 		err = dns_gethostbyname(server, &client->serverAddr.sin_addr.s_addr, mqtt_dnsCallback, client);
 		if(err == ERR_INPROGRESS)
 		{
@@ -52,7 +52,7 @@ mqtt_err_t mqtt_createClient(mqtt_client_t *client, char *server, uint16_t port,
 				LWIP_DEBUG(MQTT_DEBUG, ("MQTT: no IP found\n"));
 				return badSocket;
 			}
-			LWIP_DEBUG(MQTT_DEBUG, ("IP found:\n"));
+			LWIP_DEBUGF(MQTT_DEBUG, ("IP found:\n"));
 		}
 	}
 
@@ -69,7 +69,7 @@ mqtt_err_t mqtt_createClient(mqtt_client_t *client, char *server, uint16_t port,
 
 	client->socket = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
 
-	LWIP_DEBUG(MQTT_DEBUG, ("client %s socket number: %i\n", client->name, client->socket));
+	LWIP_DEBUGF(MQTT_DEBUG, ("client %s socket number: %i\n", client->name, client->socket));
 	if(client->socket < 0 || client->socket > 100)
 	{
 		rt_kprintf( "MQTT: SOCKET FAILED\n" );
@@ -82,12 +82,12 @@ mqtt_err_t mqtt_createClient(mqtt_client_t *client, char *server, uint16_t port,
 	err = connect(client->socket, (struct sockaddr *)&client->serverAddr, sizeof(struct sockaddr_in));
 	if(err)
 	{
-		LWIP_DEBUG(MQTT_DEBUG, ("MQTT: did not connect to socket: %i\n", client->socket));
+		LWIP_DEBUGF(MQTT_DEBUG, ("MQTT: did not connect to socket: %i\n", client->socket));
 		return badSocket;
 	}
 	sys_thread_t t = sys_thread_new("MQTTRecv", mqtt_clientThread, client, 8192, 5);
 
-	LWIP_DEBUG(MQTT_DEBUG, ("Created client: %s:\n", client->name));
+	LWIP_DEBUGF(MQTT_DEBUG, ("Created client: %s:\n", client->name));
 
 	mqtt_sendConnect(client);//FIXME: I don't want to in the future auto connect
 
